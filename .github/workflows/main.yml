@@ -44,13 +44,13 @@ jobs:
       - name: Set filetype_parameter
         id: filetype_parameter
         run: |
-          filetype_parameter=ls -A | grep -i \\.xcworkspace\$ && echo workspace || echo project
+          filetype_parameter=`ls -A | grep -i \\.xcworkspace\$ && echo workspace || echo project`
           echo "filetype_parameter=$filetype_parameter" >> $GITHUB_OUTPUT
       - name: Set file_to_build
         id: file_to_build
         run: |
-          file_to_build=ls -A | grep -i \\.xcworkspace\$ || ls -A | grep -i \\.xcodeproj\$
-          file_to_build=echo $file_to_build | awk '{$1=$1;print}'
+          file_to_build=`ls -A | grep -i \\.xcworkspace\$ || ls -A | grep -i \\.xcodeproj\$`
+          file_to_build=`echo $file_to_build | awk '{$1=$1;print}'`
           echo "file_to_build=$file_to_build" >> $GITHUB_OUTPUT
       - name: Archive
         env:
@@ -87,10 +87,10 @@ jobs:
         run: tar -xf "$archive_path.xcarchive.tar"
       - name: Install ldid
         run: |
-          if [ uname -s = "Linux" ]; then
-            curl -sSL -o /usr/local/bin/ldid "${{ github.server_url }}/ProcursusTeam/ldid/releases/latest/download/ldid_linux_uname -m"
+          if [ `uname -s` = "Linux" ]; then
+            curl -sSL -o /usr/local/bin/ldid "${{ github.server_url }}/ProcursusTeam/ldid/releases/latest/download/ldid_linux_`uname -m`"
             chmod +x /usr/local/bin/ldid
-          elif [ uname -s = "Darwin" ]; then
+          elif [ `uname -s` = "Darwin" ]; then
             brew install ldid
           else
             exit 1
