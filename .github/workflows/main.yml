@@ -109,10 +109,19 @@ jobs:
         with:
           name: ${{ env.scheme }}.ipa
           path: ${{ env.scheme }}.ipa
-      - name: Move IPA to downloads folder
+      - name: Move IPA to root of repository
         run: |
-          mkdir -p downloads
-          mv "$scheme.ipa" downloads/
+          mv "$scheme.ipa" "$GITHUB_WORKSPACE/"
+      - name: Commit and push IPA to repository
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add "$GITHUB_WORKSPACE/$scheme.ipa"
+          git commit -m "Add IPA build artifact"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
 
 
