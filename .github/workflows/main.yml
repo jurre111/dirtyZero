@@ -65,7 +65,7 @@ jobs:
           file_to_build: ${{ steps.file_to_build.outputs.file_to_build }}
         run:
           ls $archive_path.xcarchive/Products/Applications/
-          rm $archive_path.xcarchive/Products/Applications/LiveContainer.app/LiveContainer
+          rm $archive_path.xcarchive/Products/Applications/dirtyZero.app/dirtyZero
       - name: Tar Build Artifact
         run: tar -cvf "$archive_path.xcarchive.tar" "$archive_path.xcarchive"
       - name: Upload a Build Artifact
