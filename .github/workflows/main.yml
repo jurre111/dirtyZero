@@ -45,16 +45,15 @@ jobs:
         run: |
           git clone https://github.com/ProcursusTeam/ldid.git
           cd ldid
-          ./make.sh
-          sudo cp ./ldid /usr/local/bin
+          git submodule update --init
+          make
+          sudo cp ldid /usr/local/bin
           cd ..
 
       - name: Set up Theos
         run: |
-          if [ ! -d "theos" ]; then
-            git clone --recursive https://github.com/theos/theos.git theos
-            git clone https://github.com/theos/sdks.git theos/sdks
-          fi
+          git clone --recursive https://github.com/theos/theos.git theos
+          git clone https://github.com/theos/sdks.git theos/sdks
 
       - name: Build dirtyZero package
         run: make package FINALPACKAGE=1 STRIP=0
