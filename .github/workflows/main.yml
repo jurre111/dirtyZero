@@ -13,59 +13,7 @@ jobs:
     runs-on: macos-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-
-    - name: Set up environment variables
-      run: echo "APPLICATION_NAME=dirtyZero" >> $GITHUB_ENV
-
-    - name: Clean previous builds
+    - name: Run build script
       run: |
-        rm -rf build
-        if ls *.ipa 1> /dev/null 2>&1; then
-          rm -rf *.ipa
-        fi
-
-    - name: Create build directory
-      run: mkdir -p build
-
-    - name: Build app
-      run: |
-        if [[ "${{ github.event.inputs.debug }}" == "true" ]]; then
-          CONFIGURATION="Debug"
-        else
-          CONFIGURATION="Release"
-        fi
-
-        xcodebuild -project "${{ github.workspace }}/${APPLICATION_NAME}.xcodeproj" \
-          -scheme "${APPLICATION_NAME}" \
-          -configuration $CONFIGURATION \
-          -derivedDataPath "${{ github.workspace }}/build/DerivedDataApp" \
-          -destination 'generic/platform=iOS' \
-          clean build \
-          CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGN_ENTITLEMENTS="" CODE_SIGNING_ALLOWED="NO"
-
-        cp -r "${{ github.workspace }}/build/DerivedDataApp/Build/Products/$CONFIGURATION-iphoneos/$APPLICATION_NAME.app" \
-          "${{ github.workspace }}/build/$APPLICATION_NAME.app"
-
-    - name: Strip signature
-      run: |
-        if [ -e "${{ github.workspace }}/build/$APPLICATION_NAME.app/_CodeSignature" ]; then
-          rm -rf "${{ github.workspace }}/build/$APPLICATION_NAME.app/_CodeSignature"
-        fi
-        if [ -e "${{ github.workspace }}/build/$APPLICATION_NAME.app/embedded.mobileprovision" ]; then
-          rm -rf "${{ github.workspace }}/build/$APPLICATION_NAME.app/embedded.mobileprovision"
-        fi
-
-    - name: Package IPA
-      run: |
-        mkdir Payload
-        cp -r $APPLICATION_NAME.app Payload/$APPLICATION_NAME.app
-        zip -vr $APPLICATION_NAME.ipa Payload
-        rm -rf Payload
-
-    - name: Upload IPA
-      uses: actions/upload-artifact@v2
-      with:
-        name: dirtyZero-IPA
-        path: ${{ github.workspace }}/$APPLICATION_NAME.ipa
+        chmod +x $GITHUB_WORKSPACE/ipabuild.sh
+        $GITHUB_WORKSPACE/ipabuild.sh
