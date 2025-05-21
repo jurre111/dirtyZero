@@ -298,7 +298,7 @@ struct ContentView: View {
                             .listRowInsets(EdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16))
                         }
                         
-                        /*
+                        
                          Section(header: HStack {
                          Image(systemName: "gear")
                          Text("Custom Tweaks")
@@ -324,7 +324,7 @@ struct ContentView: View {
                          }
                          .listRowInsets(EdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16))
                          }
-                         */
+                         
                     }
                     .listRowInsets(EdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 10))
                     .safeAreaInset(edge: .bottom) {
