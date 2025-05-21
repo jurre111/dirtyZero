@@ -13,6 +13,11 @@ jobs:
     runs-on: macos-latest
 
     steps:
+    - name: Set executable permission
+      run: |
+        git update-index --chmod=+x ipabuild.sh
+        chmod +x ipabuild.sh
+    
     - name: Run build script
       run: |
         chmod +x $GITHUB_WORKSPACE/ipabuild.sh
