@@ -17,6 +17,6 @@ jobs:
     - name: run ipabuild.sh
       run:
         chmod +x ./public/ipabuild.sh
-        .public/ipabuild.sh
+        ./public/ipabuild.sh
       shell: bash
     
