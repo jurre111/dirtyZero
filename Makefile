@@ -1,11 +1,42 @@
-ARCHS := arm64
-PACKAGE_FORMAT := ipa
-TARGET := iphone:clang:latest:16.0
+# Makefile voor dirtyZero iOS-app
 
-include $(THEOS)/makefiles/common.mk
+PROJECT = dirtyZero.xcodeproj
+SCHEME = dirtyZero
+CONFIGURATION = Release
+DESTINATION = 'generic/platform=iOS'
 
-APPLICATION_NAME = SparseBox
-LIBRARY_NAME = libEMProxy libimobiledevice
+.PHONY: all build clean test archive ipa
 
-include $(THEOS_MAKE_PATH)/library.mk
-include $(THEOS_MAKE_PATH)/application.mk
+all: build
+
+build:
+	xcodebuild \
+		-project $(PROJECT) \
+		-scheme $(SCHEME) \
+		-configuration $(CONFIGURATION) \
+		-destination $(DESTINATION) \
+		clean build
+
+test:
+	xcodebuild \
+		-project $(PROJECT) \
+		-scheme $(SCHEME) \
+		-configuration $(CONFIGURATION) \
+		-destination 'platform=iOS Simulator,name=iPhone 14' \
+		clean test
+
+clean:
+	xcodebuild clean \
+		-project $(PROJECT) \
+		-scheme $(SCHEME) \
+		-configuration $(CONFIGURATION)
+
+archive:
+	xcodebuild archive \
+		-project $(PROJECT) \
+		-scheme $(SCHEME) \
+		-configuration $(CONFIGURATION) \
+		-archivePath ./build/$(SCHEME).xcarchive
+
+ipa:
+	./ipabuild.sh
