@@ -19,7 +19,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          submodules: recursive  # Haalt ook Theos submodules binnen
+          submodules: recursive
 
       - name: Install dependencies
         run: |
@@ -27,20 +27,32 @@ jobs:
           sudo apt-get install -y \
             dpkg-dev \
             perl \
-            ldid \
             fakeroot \
             clang \
             make \
             git \
             curl \
             unzip \
-            zip
+            zip \
+            libssl-dev \
+            libplist-dev \
+            libxml2-dev \
+            libtool \
+            autoconf \
+            automake
+
+      - name: Install ldid from source
+        run: |
+          git clone https://github.com/ProcursusTeam/ldid.git
+          cd ldid
+          ./make.sh
+          sudo cp ./ldid /usr/local/bin
+          cd ..
 
       - name: Set up Theos
         run: |
           if [ ! -d "theos" ]; then
             git clone --recursive https://github.com/theos/theos.git theos
-            # Optioneel: clone andere vendoren als je ze gebruikt
             git clone https://github.com/theos/sdks.git theos/sdks
           fi
 
