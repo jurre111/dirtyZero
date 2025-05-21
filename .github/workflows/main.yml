@@ -1,48 +1,48 @@
-name: Build
+name: Build dirtyZero
 
 on:
   push:
-  workflow_dispatch:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
-    name: Build
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
+
+    env:
+      THEOS: ${{ github.workspace }}/theos
+      CPATH: :/opt/procursus/include
+      LIBRARY_PATH: :/opt/procursus/lib
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@main
-
-      - name: Checkout theos/theos
-        uses: actions/checkout@main
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
-          repository: theos/theos
-          ref: master
-          submodules: recursive
-          path: theos
+          submodules: recursive  # Haalt ook Theos submodules binnen
 
-      - name: Checkout theos/sdks
-        uses: actions/checkout@main
-        with:
-          repository: theos/sdks
-          ref: master
-          sparse-checkout: iPhoneOS16.5.sdk
-          path: theos/sdks
-
-      - name: Ensure main utils are installed
-        uses: dhinakg/procursus-action@main
-        with:
-          packages: coreutils make xz ldid
-          
-      - name: Build
+      - name: Install dependencies
         run: |
-          export THEOS=theos
+          sudo apt-get update
+          sudo apt-get install -y \
+            dpkg-dev \
+            perl \
+            ldid \
+            fakeroot \
+            clang \
+            make \
+            git \
+            curl \
+            unzip \
+            zip
 
-          git submodule update --init
-          gmake package FINALPACKAGE=1 STRIP=0
+      - name: Set up Theos
+        run: |
+          if [ ! -d "theos" ]; then
+            git clone --recursive https://github.com/theos/theos.git theos
+            # Optioneel: clone andere vendoren als je ze gebruikt
+            git clone https://github.com/theos/sdks.git theos/sdks
+          fi
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@main
-        with:
-          name: artifact
-          path: packages/*.ipa
+      - name: Build dirtyZero package
+        run: make package FINALPACKAGE=1 STRIP=0
