@@ -52,8 +52,14 @@ jobs:
 
       - name: Set up Theos
         run: |
-          git clone --recursive https://github.com/theos/theos.git theos
-          git clone https://github.com/theos/sdks.git theos/sdks
+          if [ ! -d "theos" ]; then
+            git clone --recursive https://github.com/theos/theos.git theos
+          fi
+
+          if [ ! -d "theos/sdks" ]; then
+            git clone https://github.com/theos/sdks.git theos/sdks
+          fi
+
 
       - name: Build dirtyZero package
         run: make package FINALPACKAGE=1 STRIP=0
