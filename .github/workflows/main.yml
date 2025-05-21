@@ -111,8 +111,7 @@ jobs:
           path: ${{ env.scheme }}.ipa
       - name: Copy IPA to root of repository
         run: 
-          cp "$scheme.ipa" "$GITHUB_WORKSPACE/downloads"
-          ls -al downloads/
+          cp "$scheme.ipa" "$GITHUB_WORKSPACE/downloads/"
 
 
 
