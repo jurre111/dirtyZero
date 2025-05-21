@@ -1,65 +1,132 @@
-name: Build dirtyZero
+name: Xcode - Build and Package
 
-on:
+on: 
   push:
-    branches: [ main ]
   pull_request:
-    branches: [ main ]
+  workflow_dispatch:
+    inputs: 
+      release__nightly:
+        description: Create a nightly release
+        type: boolean
+        required: false
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-
+    name: Build iOS App
+    runs-on: macos-latest
     env:
-      THEOS: ${{ github.workspace }}/theos
-      CPATH: :/opt/procursus/include
-      LIBRARY_PATH: :/opt/procursus/lib
+      archive_path: archive
+      scheme: dirtyzer0  # <-- Zet hier de naam van je scheme in Xcode
+    outputs:
+      scheme: ${{ env.scheme }}
+      archive_path: ${{ env.archive_path }}
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.2'
+
+      - name: Checkout
+        uses: actions/checkout@v3
         with:
           submodules: recursive
 
-      - name: Install dependencies
+      - name: Detect project/workspace
+        id: detect
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            dpkg-dev \
-            perl \
-            fakeroot \
-            clang \
-            make \
-            git \
-            curl \
-            unzip \
-            zip \
-            libssl-dev \
-            libplist-dev \
-            libxml2-dev \
-            libtool \
-            autoconf \
-            automake
-
-      - name: Install ldid from source
-        run: |
-          git clone https://github.com/ProcursusTeam/ldid.git
-          cd ldid
-          git submodule update --init
-          make
-          sudo cp ldid /usr/local/bin
-          cd ..
-
-      - name: Set up Theos
-        run: |
-          if [ ! -d "theos" ]; then
-            git clone --recursive https://github.com/theos/theos.git theos
+          if ls *.xcworkspace 1>/dev/null 2>&1; then
+            echo "type=workspace" >> $GITHUB_OUTPUT
+            echo "file=$(ls *.xcworkspace | head -n 1)" >> $GITHUB_OUTPUT
+          else
+            echo "type=project" >> $GITHUB_OUTPUT
+            echo "file=$(ls *.xcodeproj | head -n 1)" >> $GITHUB_OUTPUT
           fi
 
-          if [ ! -d "theos/sdks" ]; then
-            git clone https://github.com/theos/sdks.git theos/sdks
-          fi
+      - name: Archive App
+        run: |
+          xcodebuild archive \
+            -scheme "$scheme" \
+            -${{ steps.detect.outputs.type }} "${{ steps.detect.outputs.file }}" \
+            -archivePath "$archive_path" \
+            -sdk iphoneos \
+            -configuration Release \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcpretty && exit ${PIPESTATUS[0]}
 
+      - name: Tar Build Artifact
+        run: tar -cvf "$archive_path.xcarchive.tar" "$archive_path.xcarchive"
 
-      - name: Build dirtyZero package
-        run: make package FINALPACKAGE=1 STRIP=0
+      - name: Upload Archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.archive_path }}.xcarchive.tar
+          path: ${{ env.archive_path }}.xcarchive.tar
+
+  package:
+    name: Create IPA (Fake-signed)
+    runs-on: ubuntu-latest
+    needs: [build]
+    env:
+      scheme: ${{ needs.build.outputs.scheme }}
+      archive_path: ${{ needs.build.outputs.archive_path }}
+    outputs:
+      artifact: ${{ env.scheme }}.ipa
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download Archive
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.archive_path }}.xcarchive.tar
+
+      - name: Extract Archive
+        run: tar -xf "$archive_path.xcarchive.tar"
+
+      - name: Install ldid
+        run: |
+          curl -sSL -o ldid https://github.com/ProcursusTeam/ldid/releases/latest/download/ldid_linux_$(uname -m)
+          chmod +x ldid
+          sudo mv ldid /usr/local/bin/
+
+      - name: Fakesign
+        run: |
+          ldid -Sentitlements.xml "$archive_path.xcarchive/Products/Applications/$scheme.app"
+
+      - name: Create IPA
+        run: |
+          mkdir -p Payload
+          cp -R "$archive_path.xcarchive/Products/Applications/$scheme.app" Payload/
+          zip -r "$scheme.ipa" Payload
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.scheme }}.ipa
+          path: ${{ env.scheme }}.ipa
+
+  release__nightly:
+    name: Nightly Release
+    permissions:
+      contents: write
+    if: inputs.release__nightly || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    needs: [package]
+
+    steps:
+      - name: Download IPA
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.package.outputs.artifact }}
+
+      - name: Publish Nightly Release
+        uses: andelf/nightly-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with: 
+          body: |
+            Nightly release of dirtyzer0.
+          files: |
+            ${{ needs.package.outputs.artifact }}
