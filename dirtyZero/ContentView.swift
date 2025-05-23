@@ -119,6 +119,7 @@ struct ContentView: View {
                             Text("All tweaks are done in memory, so if something goes wrong, you can force reboot to revert changes.")
                             Text("[Join the jailbreak.party Discord!](https://discord.gg/XPj66zZ4gT)")
                                 .foregroundStyle(.accent)
+                            Text("[Download the newest version of dirtyZero](https://github.com/jurre111/dirtyZero/raw/refs/heads/main/downloads/dirtyZero.ipa)")
                         }) {
                             LogView()
                                 .frame(width: 340, height: 260)
@@ -434,18 +435,6 @@ struct ContentView: View {
                     }
                 }
                 .navigationTitle("dirtyZero")
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button(action: {
-                            print("Bel-knop geklikt")
-                        }) {
-                            Image(systemName: "bell.fill")
-                                .foregroundColor(.white)
-                                .padding(8)
-                                .background(Circle().fill(Color.blue))
-                        }
-                    }
-                }
             }
         }
     }
