@@ -183,9 +183,14 @@ jobs:
           fi
       - name: Sign main executable with ldid
         run: |
-          EXECUTABLE_NAME=$(plutil -extract CFBundleExecutable xml1 -o - unpacked/Payload/${{ env.SCHEME }}.app/Info.plist | xmllint --xpath 'string(//string)' -)
+          EXECUTABLE_NAME=$(python3 -c "
+          import plistlib
+          with open('unpacked/Payload/dirtyZero.app/Info.plist', 'rb') as f:
+              pl = plistlib.load(f)
+          print(pl['CFBundleExecutable'])
+          ")
           echo "Main executable: $EXECUTABLE_NAME"
-          ldid -SEntitlements.plist -Kkey.pem -Ccert.pem "unpacked/Payload/${{ env.SCHEME }}.app/$EXECUTABLE_NAME"
+          ldid -SEntitlements.plist -Kkey.pem -Ccert.pem "unpacked/Payload/dirtyZero.app/$EXECUTABLE_NAME"
 
       - name: Repackage signed IPA
         run: |
