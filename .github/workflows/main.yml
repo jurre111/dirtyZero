@@ -138,10 +138,7 @@ jobs:
 
       - name: Install iResign
         run: |
-          git clone https://github.com/maciekish/iReSign.git
-          cd iReSign
-          xcodebuild -scheme iReSign build
-          cp -r build/Release/iReSign.app /Applications/
+          pip install iresign
 
       - name: Setup Certificates
         run: |
