@@ -190,7 +190,7 @@ jobs:
         run: |
           EXEC=$(/usr/libexec/PlistBuddy -c "Print CFBundleExecutable" "unpacked/Payload/dirtyZero.app/Info.plist")
           echo "Signing $EXEC"
-          ldid -S entitlements.plist -K key.pem -C cert.pem "unpacked/Payload/dirtyZero.app/$EXEC"
+          ldid -S entitlements.plist -K key.pem -C cert.pem Payload/dirtyZero.app/dirtyZero
 
 
 
