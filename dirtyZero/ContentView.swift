@@ -434,6 +434,18 @@ struct ContentView: View {
                     }
                 }
                 .navigationTitle("dirtyZero")
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(action: {
+                            print("Bel-knop geklikt")
+                        }) {
+                            Image(systemName: "bell.fill")
+                                .foregroundColor(.white)
+                                .padding(8)
+                                .background(Circle().fill(Color.blue))
+                        }
+                    }
+                }
             }
         }
     }
