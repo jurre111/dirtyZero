@@ -123,83 +123,54 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-
-  sign:
-    name: Real Sign IPA using ldid (on macOS)
+  sign_ipa:
+    name: Sign IPA with iResign
     runs-on: macos-latest
     needs: [package]
-
     steps:
-      - name: Install ldid
-        run:
-          brew install ldid
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Download unsigned IPA
+      - name: Download Unsigned IPA
         uses: actions/download-artifact@v4
         with:
           name: dirtyZero.ipa
 
-      - name: Unpack IPA
+      - name: Install iResign
         run: |
-          mkdir unpacked
-          cd unpacked
-          unzip ../dirtyZero.ipa
+          git clone https://github.com/maciekish/iReSign.git
+          cd iReSign
+          xcodebuild -scheme iReSign build
+          cp -r build/Release/iReSign.app /Applications/
 
-      - name: Decode credentials
+      - name: Setup Certificates
         run: |
           echo "${{ secrets.P12_BASE64 }}" | base64 -d > signing.p12
           echo "${{ secrets.PROVISION_BASE64 }}" | base64 -d > profile.mobileprovision
+          security create-keychain -p password build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p password build.keychain
+          security import signing.p12 -k build.keychain -P "${{ secrets.CERT_PASSWORD }}" -T /usr/bin/codesign
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
 
-      - name: Extract cert and key from P12
+      - name: Resign IPA
         run: |
-          openssl pkcs12 -in signing.p12 -nocerts -out key.pem -nodes -passin pass:${{ secrets.P12_PASSWORD }}
-          openssl pkcs12 -in signing.p12 -clcerts -nokeys -out cert.pem -passin pass:${{ secrets.P12_PASSWORD }}
+          /Applications/iReSign.app/Contents/MacOS/iReSign \
+            -i dirtyZero.ipa \
+            -c "iPhone Distribution" \
+            -p ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision \
+            -o dirtyZero-signed.ipa
 
-      - name: Replace provisioning profile
+      - name: Replace Unsigned IPA
         run: |
-          cp profile.mobileprovision "unpacked/Payload/dirtyZero.app/embedded.mobileprovision"
-
-      - name: Create Entitlements
-        run: |
-          cat > entitlements.plist <<EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" 
-          "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>get-task-allow</key>
-              <false/>
-          </dict>
-          </plist>
-          EOF
-
-      - name: Sign frameworks
-        run: |
-          find unpacked/Payload/dirtyZero.app/Frameworks -type d -name '*.framework' -exec ldid -S entitlements.plist -K key.pem -C cert.pem {} \; || true
-
-      - name: Sign main executable
-        run: |
-          EXEC=$(/usr/libexec/PlistBuddy -c "Print CFBundleExecutable" "unpacked/Payload/dirtyZero.app/Info.plist")
-          echo "Signing $EXEC"
-          ls -l entitlements.plist
-          ls -l key.pem
-          ls -l cert.pem
-          ldid -S entitlements.plist -K key.pem -C cert.pem Payload/dirtyZero.app/dirtyZero
-
-      - name: Repackage IPA
-        run: |
-          cd unpacked
-          zip -r ../dirtyZero-signed.ipa Payload
+          mv dirtyZero-signed.ipa dirtyZero.ipa
 
       - name: Upload Signed IPA
         uses: actions/upload-artifact@v4
         with:
-          name: dirtyZero-signed.ipa
-          path: dirtyZero-signed.ipa
-
-
+          name: dirtyZero.ipa
+          path: dirtyZero.ipa
 
 
 
