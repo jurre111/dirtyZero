@@ -130,6 +130,16 @@ jobs:
     needs: [package]
 
     steps:
+      - name: Install ldid
+        run: |
+          if [ `uname -s` = "Linux" ]; then
+            curl -sSL -o /usr/local/bin/ldid "${{ github.server_url }}/ProcursusTeam/ldid/releases/latest/download/ldid_linux_`uname -m`"
+            chmod +x /usr/local/bin/ldid
+          elif [ `uname -s` = "Darwin" ]; then
+            brew install ldid
+          else
+            exit 1
+          fi
       - name: Checkout
         uses: actions/checkout@v3
 
