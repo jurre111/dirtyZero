@@ -66,62 +66,71 @@ jobs:
           name: ${{ env.archive_path }}.xcarchive.tar
           path: ${{ env.archive_path }}.xcarchive.tar
 
-  package:
-    name: Create fake-signed ipa
-    runs-on: ubuntu-latest
+  sign:
+    name: Sign IPA with certificate
+    runs-on: macos-latest
     needs: [build]
-    env:
-      scheme: ${{ needs.build.outputs.scheme }}
-      archive_path: ${{ needs.build.outputs.archive_path }}
-    outputs:
-      artifact: ${{ env.scheme }}.ipa
-
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Download a Build Artifact
+
+      - name: Download Build Artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ env.archive_path }}.xcarchive.tar
-      - name: Extract Build Artifact
-        run: tar -xf "$archive_path.xcarchive.tar"
-      - name: Install ldid
+          name: dirtyZero.ipa
+          path: downloads
+
+      - name: Prepare signing materials
         run: |
-          if [ `uname -s` = "Linux" ]; then
-            curl -sSL -o /usr/local/bin/ldid "${{ github.server_url }}/ProcursusTeam/ldid/releases/latest/download/ldid_linux_`uname -m`"
-            chmod +x /usr/local/bin/ldid
-          elif [ `uname -s` = "Darwin" ]; then
-            brew install ldid
-          else
-            exit 1
-          fi
-      - name: Fakesign
+          echo "$P12_BASE64" | base64 -D > signing.p12
+          echo "$PROVISION_BASE64" | base64 -D > profile.mobileprovision
+        env:
+          P12_BASE64: ${{ secrets.P12_BASE64 }}
+          PROVISION_BASE64: ${{ secrets.PROVISION_BASE64 }}
+
+      - name: Create Keychain and Import Cert
         run: |
-          ls "$archive_path.xcarchive/Products/Applications/dirtyZero.app"
-          find "$archive_path.xcarchive/Products/Applications/$scheme.app" -type d -path '*/Frameworks/*.framework' -exec ldid -Sentitlements.xml \{\} \;
-          ldid -Sentitlements.xml "$archive_path.xcarchive/Products/Applications/$scheme.app"
-      - name: Create IPA
+          security create-keychain -p password temp.keychain
+          security default-keychain -s temp.keychain
+          security unlock-keychain -p password temp.keychain
+          security import signing.p12 -k temp.keychain -P "${{ secrets.P12_PASSWORD }}" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k password temp.keychain
+
+      - name: Unzip IPA
         run: |
-          mv "$archive_path.xcarchive/Products/Applications" Payload
-          zip -r "$scheme.ipa" "Payload" -x "._*" -x ".DS_Store" -x "__MACOSX"
-      - name: Upload a Build Artifact
+          mkdir payload
+          unzip downloads/dirtyZero.ipa -d payload
+
+      - name: Embed Provisioning Profile
+        run: |
+          cp profile.mobileprovision payload/Payload/dirtyZero.app/embedded.mobileprovision
+
+      - name: Extract Entitlements
+        run: |
+          codesign -d --entitlements :- payload/Payload/dirtyZero.app > entitlements.plist || echo ""
+
+      - name: Resign App
+        run: |
+          IDENTITY=$(security find-identity -v -p codesigning temp.keychain | grep 'Apple' | awk '{print $2}')
+          echo "Using identity: $IDENTITY"
+          codesign -f -s "$IDENTITY" --entitlements entitlements.plist --keychain temp.keychain payload/Payload/dirtyZero.app
+
+      - name: Verify Signature
+        run: |
+          codesign -dv --verbose=4 payload/Payload/dirtyZero.app
+
+      - name: Repackage Signed IPA
+        run: |
+          cd payload
+          zip -r ../dirtyZero-signed.ipa Payload
+          cd ..
+
+      - name: Upload Signed IPA
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.scheme }}.ipa
-          path: ${{ env.scheme }}.ipa
-      - name: Move IPA to root of repository
-        run: |
-          mkdir -p downloads
-          mv "$scheme.ipa" "$GITHUB_WORKSPACE/downloads/"
-      - name: Commit and push IPA to repository
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
-          git add "$GITHUB_WORKSPACE/downloads/$scheme.ipa"
-          git commit -m "Add IPA build artifact"
-          git push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: dirtyZero-signed
+          path: dirtyZero-signed.ipa
+
 
 
 
