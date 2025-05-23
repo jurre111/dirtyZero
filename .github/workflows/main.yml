@@ -125,34 +125,40 @@ jobs:
 
 
   sign:
-    name: Sign IPA with certificate
-    runs-on: macos-latest   # Use macOS runner for `security` commands
+    name: Sign IPA with ldid on Ubuntu
+    runs-on: ubuntu-latest
     needs: [package]
     env:
-      KEYCHAIN_PASSWORD: buildpassword
-      P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+      SCHEME: dirtyZero
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip zip libplist-utils openssl curl
+          # Install ldid (latest from ProcursusTeam GitHub)
+          curl -sSL -o /usr/local/bin/ldid "https://github.com/ProcursusTeam/ldid/releases/latest/download/ldid_linux_$(uname -m)"
+          chmod +x /usr/local/bin/ldid
 
       - name: Decode and prepare signing files
         run: |
           echo "${{ secrets.P12_BASE64 }}" | base64 -d > signing.p12
           echo "${{ secrets.PROVISION_BASE64 }}" | base64 -d > profile.mobileprovision
 
-      - name: Create temporary keychain
+      - name: Extract cert and key from p12
         run: |
-          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-          security import signing.p12 -k build.keychain -P "$P12_PASSWORD" -T /usr/bin/codesign -A -f pkcs12
-          security list-keychains -s build.keychain
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+          openssl pkcs12 -in signing.p12 -nocerts -nodes -passin pass:${{ secrets.P12_PASSWORD }} -out key.pem
+          openssl pkcs12 -in signing.p12 -clcerts -nokeys -passin pass:${{ secrets.P12_PASSWORD }} -out cert.pem
 
-      - name: Copy provisioning profile into app
+      - name: Unpack unsigned IPA
         run: |
-          cp downloads/${{ env.scheme }}.ipa unsigned.ipa
-          unzip unsigned.ipa -d unpacked
-          cp profile.mobileprovision unpacked/Payload/${{ env.scheme }}.app/embedded.mobileprovision
+          unzip downloads/${{ env.SCHEME }}.ipa -d unpacked
+
+      - name: Replace provisioning profile
+        run: |
+          cp profile.mobileprovision unpacked/Payload/${{ env.SCHEME }}.app/embedded.mobileprovision
 
       - name: Create entitlements.plist
         run: |
@@ -168,31 +174,26 @@ jobs:
           </plist>
           EOF
 
-      - name: Real sign embedded frameworks and main executable with ldid
+      - name: Sign embedded frameworks with ldid
         run: |
-          # Install ldid if needed
-          if ! command -v ldid &> /dev/null; then
-            brew install ldid
-          fi
+          find unpacked/Payload/${{ env.SCHEME }}.app/Frameworks -type d -name '*.framework' -exec ldid -Sentitlements.plist -Kkey.pem -Ccert.pem {} \;
 
-          APP_PATH=unpacked/Payload/${{ env.scheme }}.app
-          find "$APP_PATH/Frameworks" -type d -name '*.framework' -exec ldid -Sentitlements.plist -Ksigning.p12 -Csigning.p12 {} \;
-          EXECUTABLE_NAME=$(defaults read "$APP_PATH/Info.plist" CFBundleExecutable)
-          ldid -SEntitlements.plist -Ksigning.p12 -Csigning.p12 "$APP_PATH/$EXECUTABLE_NAME"
+      - name: Sign main executable with ldid
+        run: |
+          EXECUTABLE_NAME=$(plutil -extract CFBundleExecutable xml1 -o - unpacked/Payload/${{ env.SCHEME }}.app/Info.plist | xmllint --xpath 'string(//string)' -)
+          echo "Main executable: $EXECUTABLE_NAME"
+          ldid -SEntitlements.plist -Kkey.pem -Ccert.pem "unpacked/Payload/${{ env.SCHEME }}.app/$EXECUTABLE_NAME"
 
-      - name: Repackage IPA
+      - name: Repackage signed IPA
         run: |
           cd unpacked
-          zip -r ../${{ env.scheme }}.ipa Payload -x "._*" -x ".DS_Store" -x "__MACOSX"
+          zip -r ../${{ env.SCHEME }}.ipa Payload -x "._*" -x ".DS_Store" -x "__MACOSX"
           cd ..
 
       - name: Replace IPA in downloads folder
         run: |
-          mv ${{ env.scheme }}.ipa downloads/${{ env.scheme }}.ipa
+          mv ${{ env.SCHEME }}.ipa downloads/${{ env.SCHEME }}.ipa
 
-      - name: Cleanup
-        run: |
-          security delete-keychain build.keychain
 
 
 
