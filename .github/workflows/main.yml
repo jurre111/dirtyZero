@@ -127,7 +127,7 @@ jobs:
   sign:
     name: Sign IPA with certificate
     runs-on: macos-latest
-    needs: [build]
+    needs: [package]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
