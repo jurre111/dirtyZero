@@ -125,7 +125,7 @@ jobs:
 
 
   sign:
-    name: Sign IPA with certificate
+    name: Sign IPA
     runs-on: macos-latest
     needs: [package]
     steps:
