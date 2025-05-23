@@ -190,7 +190,7 @@ jobs:
           print(pl['CFBundleExecutable'])
           ")
           echo "Main executable: $EXECUTABLE_NAME"
-          ldid -SEntitlements.plist -Kkey.pem -Ccert.pem "unpacked/Payload/dirtyZero.app/$EXECUTABLE_NAME"
+          ldid -Sentitlements.plist -Kkey.pem -Ccert.pem "unpacked/Payload/dirtyZero.app/$EXECUTABLE_NAME"
 
       - name: Repackage signed IPA
         run: |
