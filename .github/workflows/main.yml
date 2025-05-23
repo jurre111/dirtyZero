@@ -128,71 +128,78 @@ jobs:
     name: Sign IPA with certificate
     runs-on: macos-latest
     needs: [package]
+    env:
+      IPA_NAME: dirtyZero.ipa
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Download Build Artifact
+      - name: Download unsigned IPA artifact
         uses: actions/download-artifact@v4
         with:
-          name: dirtyZero.ipa
+          name: ${{ env.IPA_NAME }}
           path: downloads
 
-      - name: Prepare signing materials
+      - name: Prepare signing files
         run: |
-          echo "$P12_BASE64" | base64 -D > signing.p12
-          echo "$PROVISION_BASE64" | base64 -D > profile.mobileprovision
-        env:
-          P12_BASE64: ${{ secrets.P12_BASE64 }}
-          PROVISION_BASE64: ${{ secrets.PROVISION_BASE64 }}
+          echo "${{ secrets.P12_BASE64 }}" | base64 -d > signing.p12
+          echo "${{ secrets.PROVISION_BASE64 }}" | base64 -d > profile.mobileprovision
+        shell: bash
 
-      - name: Create Keychain and Import Cert
+      - name: Create temporary keychain and import cert
         run: |
-          security create-keychain -p password temp.keychain
-          security default-keychain -s temp.keychain
-          security unlock-keychain -p password temp.keychain
-          security import signing.p12 -k temp.keychain -P "${{ secrets.P12_PASSWORD }}" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple: -s -k password temp.keychain
+          security create-keychain -p "" build.keychain
+          security import signing.p12 -k build.keychain -P "${{ secrets.P12_PASSWORD }}" -T /usr/bin/codesign
+          security list-keychains -s build.keychain
+          security unlock-keychain -p "" build.keychain
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
+        shell: bash
 
       - name: Unzip IPA
         run: |
-          mkdir payload
-          unzip downloads/dirtyZero.ipa -d payload
+          mkdir -p payload
+          unzip downloads/${IPA_NAME} -d payload
+        shell: bash
 
-      - name: Embed Provisioning Profile
+      - name: Embed provisioning profile
         run: |
           cp profile.mobileprovision payload/Payload/dirtyZero.app/embedded.mobileprovision
+        shell: bash
 
-      - name: Extract Entitlements
+      - name: Extract entitlements from app
         run: |
-          codesign -d --entitlements :- payload/Payload/dirtyZero.app > entitlements.plist || echo ""
+          codesign -d --entitlements :- payload/Payload/dirtyZero.app > entitlements.plist || echo "{}" > entitlements.plist
+        shell: bash
 
-      - name: Resign App
+      - name: Resign app with codesign
         run: |
-          IDENTITY=$(security find-identity -v -p codesigning temp.keychain | grep 'Apple' | awk '{print $2}')
+          IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep -m1 'iPhone Developer\|iPhone Distribution' | awk '{print $2}')
           echo "Using identity: $IDENTITY"
-          codesign -f -s "$IDENTITY" --entitlements entitlements.plist --keychain temp.keychain payload/Payload/dirtyZero.app
+          codesign --force --sign "$IDENTITY" --entitlements entitlements.plist --keychain build.keychain payload/Payload/dirtyZero.app
+        shell: bash
 
-      - name: Verify Signature
+      - name: Verify signature
         run: |
           codesign -dv --verbose=4 payload/Payload/dirtyZero.app
+        shell: bash
 
-      - name: Repackage Signed IPA
+      - name: Repackage IPA
         run: |
           cd payload
-          zip -r ../dirtyZero-signed.ipa Payload
+          zip -r ../${IPA_NAME} Payload
           cd ..
+        shell: bash
 
-      - name: Upload Signed IPA
+      - name: Replace unsigned IPA with signed IPA
+        run: |
+          mv ${IPA_NAME} downloads/${IPA_NAME}
+        shell: bash
+
+      - name: Upload signed IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: dirtyZero-signed
-          path: dirtyZero-signed.ipa
-
-
-
-
-
+          name: ${IPA_NAME}
+          path: downloads/${IPA_NAME}
 
 
   release__nightly:
