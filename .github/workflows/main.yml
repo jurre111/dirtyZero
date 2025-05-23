@@ -130,35 +130,3 @@ jobs:
         with:
           name: dirtyZero-signed
           path: dirtyZero-signed.ipa
-
-
-
-
-
-
-
-  release__nightly:
-    name: Nightly Release
-    permissions:
-      contents: write
-    if: inputs.release__nightly || github.event_name == 'push'
-    runs-on: ubuntu-latest
-    needs: [package]
-    concurrency:
-      group: release__nightly
-      cancel-in-progress: true
-
-    steps:
-      - name: Download a Build Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.package.outputs.artifact }}
-      - name: Nightly Release
-        uses: andelf/nightly-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with: 
-          body: |
-            This is a nightly release [created automatically with GitHub Actions workflow](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}).
-          files: |
-            ${{ needs.package.outputs.artifact }}
