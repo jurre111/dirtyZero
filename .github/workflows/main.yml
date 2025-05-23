@@ -138,7 +138,10 @@ jobs:
 
       - name: Install iResign
         run: |
-          pip install iresign
+          git clone https://github.com/maciekish/iReSign.git
+          cd iReSign
+          chmod +x iReSign.py
+
 
       - name: Setup Certificates
         run: |
@@ -153,11 +156,12 @@ jobs:
 
       - name: Resign IPA
         run: |
-          /Applications/iReSign.app/Contents/MacOS/iReSign \
+          python3 iReSign/iReSign.py \
             -i dirtyZero.ipa \
             -c "iPhone Distribution" \
             -p ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision \
             -o dirtyZero-signed.ipa
+
 
       - name: Replace Unsigned IPA
         run: |
