@@ -125,42 +125,40 @@ jobs:
 
 
   sign:
-    name: Sign IPA with ldid on Ubuntu
-    runs-on: ubuntu-latest
+    name: Real Sign IPA using ldid (on macOS)
+    runs-on: macos-latest
     needs: [package]
-    env:
-      SCHEME: dirtyZero
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y unzip zip libplist-utils openssl curl
-          # Install ldid (latest from ProcursusTeam GitHub)
-          curl -sSL -o /usr/local/bin/ldid "https://github.com/ProcursusTeam/ldid/releases/latest/download/ldid_linux_$(uname -m)"
-          chmod +x /usr/local/bin/ldid
+      - name: Download unsigned IPA
+        uses: actions/download-artifact@v4
+        with:
+          name: dirtyZero.ipa
 
-      - name: Decode and prepare signing files
+      - name: Unpack IPA
+        run: |
+          mkdir unpacked
+          cd unpacked
+          unzip ../dirtyZero.ipa
+
+      - name: Decode credentials
         run: |
           echo "${{ secrets.P12_BASE64 }}" | base64 -d > signing.p12
           echo "${{ secrets.PROVISION_BASE64 }}" | base64 -d > profile.mobileprovision
 
-      - name: Extract cert and key from p12
+      - name: Extract cert and key from P12
         run: |
-          openssl pkcs12 -in signing.p12 -nocerts -nodes -passin pass:${{ secrets.P12_PASSWORD }} -out key.pem
-          openssl pkcs12 -in signing.p12 -clcerts -nokeys -passin pass:${{ secrets.P12_PASSWORD }} -out cert.pem
-
-      - name: Unpack unsigned IPA
-        run: |
-          unzip downloads/${{ env.SCHEME }}.ipa -d unpacked
+          openssl pkcs12 -in signing.p12 -nocerts -out key.pem -nodes -passin pass:${{ secrets.P12_PASSWORD }}
+          openssl pkcs12 -in signing.p12 -clcerts -nokeys -out cert.pem -passin pass:${{ secrets.P12_PASSWORD }}
 
       - name: Replace provisioning profile
         run: |
-          cp profile.mobileprovision unpacked/Payload/${{ env.SCHEME }}.app/embedded.mobileprovision
+          cp profile.mobileprovision "unpacked/Payload/dirtyZero.app/embedded.mobileprovision"
 
-      - name: Create entitlements.plist
+      - name: Create Entitlements
         run: |
           cat > entitlements.plist <<EOF
           <?xml version="1.0" encoding="UTF-8"?>
@@ -169,38 +167,32 @@ jobs:
           <plist version="1.0">
           <dict>
               <key>get-task-allow</key>
-              <true/>
+              <false/>
           </dict>
           </plist>
           EOF
 
-      - name: Sign embedded frameworks with ldid
+      - name: Sign frameworks
         run: |
-          if [ -d "unpacked/Payload/${SCHEME}.app/Frameworks" ]; then
-            find unpacked/Payload/${SCHEME}.app/Frameworks -type d -name '*.framework' -exec ldid -Sentitlements.plist -Kkey.pem -Ccert.pem {} \;
-          else
-            echo "No Frameworks directory found, skipping framework signing."
-          fi
-      - name: Sign main executable with ldid
-        run: |
-          EXECUTABLE_NAME=$(python3 -c "
-          import plistlib
-          with open('unpacked/Payload/dirtyZero.app/Info.plist', 'rb') as f:
-              pl = plistlib.load(f)
-          print(pl['CFBundleExecutable'])
-          ")
-          echo "Main executable: $EXECUTABLE_NAME"
-          ldid -Sentitlements.plist -Kkey.pem -Ccert.pem "unpacked/Payload/dirtyZero.app/$EXECUTABLE_NAME"
+          find unpacked/Payload/dirtyZero.app/Frameworks -type d -name '*.framework' -exec ldid -S entitlements.plist -K key.pem -C cert.pem {} \; || true
 
-      - name: Repackage signed IPA
+      - name: Sign main executable
+        run: |
+          EXEC=$(defaults read "unpacked/Payload/dirtyZero.app/Info" CFBundleExecutable)
+          echo "Signing $EXEC"
+          ldid -S entitlements.plist -K key.pem -C cert.pem "unpacked/Payload/dirtyZero.app/$EXEC"
+
+      - name: Repackage IPA
         run: |
           cd unpacked
-          zip -r ../${{ env.SCHEME }}.ipa Payload -x "._*" -x ".DS_Store" -x "__MACOSX"
-          cd ..
+          zip -r ../dirtyZero-signed.ipa Payload
 
-      - name: Replace IPA in downloads folder
-        run: |
-          mv ${{ env.SCHEME }}.ipa downloads/${{ env.SCHEME }}.ipa
+      - name: Upload Signed IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: dirtyZero-signed.ipa
+          path: dirtyZero-signed.ipa
+
 
 
 
