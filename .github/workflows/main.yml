@@ -183,9 +183,10 @@ jobs:
         run: |
           EXEC=$(/usr/libexec/PlistBuddy -c "Print CFBundleExecutable" "unpacked/Payload/dirtyZero.app/Info.plist")
           echo "Signing $EXEC"
+          ls -l entitlements.plist
+          ls -l key.pem
+          ls -l cert.pem
           ldid -S entitlements.plist -K key.pem -C cert.pem Payload/dirtyZero.app/dirtyZero
-
-
 
       - name: Repackage IPA
         run: |
