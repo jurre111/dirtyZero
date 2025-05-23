@@ -176,8 +176,11 @@ jobs:
 
       - name: Sign embedded frameworks with ldid
         run: |
-          find unpacked/Payload/${{ env.SCHEME }}.app/Frameworks -type d -name '*.framework' -exec ldid -Sentitlements.plist -Kkey.pem -Ccert.pem {} \;
-
+          if [ -d "unpacked/Payload/${SCHEME}.app/Frameworks" ]; then
+            find unpacked/Payload/${SCHEME}.app/Frameworks -type d -name '*.framework' -exec ldid -Sentitlements.plist -Kkey.pem -Ccert.pem {} \;
+          else
+            echo "No Frameworks directory found, skipping framework signing."
+          fi
       - name: Sign main executable with ldid
         run: |
           EXECUTABLE_NAME=$(plutil -extract CFBundleExecutable xml1 -o - unpacked/Payload/${{ env.SCHEME }}.app/Info.plist | xmllint --xpath 'string(//string)' -)
