@@ -150,20 +150,15 @@ jobs:
       - name: Set up certificates
         run: |
           echo "${{ secrets.P12_BASE64 }}" | base64 -d > signing.p12
-          echo "${{ secrets.PROVISION_BASE64 }}" | base64 -d > embedded.mobileprovision
+          echo "${{ secrets.PROVISION_BASE64 }}" | base64 -d > profile.mobileprovision
           openssl pkcs12 -in signing.p12 -nocerts -out key.pem -nodes -passin pass:""
           openssl pkcs12 -in signing.p12 -clcerts -nokeys -out cert.pem -passin pass:""
           openssl pkcs12 -export -inkey key.pem -in cert.pem -out new.p12 -passout pass:temp123
           security import new.p12 -k build.keychain -P temp123 -T /usr/bin/codesign
-
-      - name: Embed provisioning profile
+      - name: Sign with fastlane
         run: |
-          cp embedded.mobileprovision unsigned_payload/Payload/dirtyZero.app/embedded.mobileprovision
-
-      - name: Sign with codesign
-        run: |
-          codesign -f -s "$(security find-identity -v -p codesigning build.keychain | grep -o '".*"' | head -n 1 | tr -d '"')" unsigned_payload/Payload/dirtyZero.app
-
+          brew install fastlane
+          fastlane match development --type ipa --readonly --signing_identity "$(security find-identity -v -p codesigning build.keychain | grep -o '".*"' | head -n 1 | tr -d '"')" --profile "profile.mobileprovision" --app_identifier "com.yourcompany.yourapp"
       - name: Repack IPA
         run: |
           cd unsigned_payload
