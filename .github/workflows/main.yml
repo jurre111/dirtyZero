@@ -138,8 +138,10 @@ jobs:
 
       - name: Install iResign
         run: |
-          git clone https://github.com/maciekish/iReSign.git
-          chmod +x iReSign/iReSign.py
+          curl -O https://example.com/bestand.zip
+          unzip bestand.zip -d iresign
+          cd iresign
+          chmod +x ./iresign_ui.macos
       - name: Setup Certificates
         run: |
           echo "${{ secrets.P12_BASE64 }}" | base64 -d > signing.p12
@@ -153,11 +155,7 @@ jobs:
 
       - name: Resign IPA
         run: |
-          python3 iReSign/iReSign.py \
-            -i dirtyZero.ipa \
-            -c "iPhone Distribution" \
-            -p ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision \
-            -o dirtyZero-signed.ipa
+          ./iresign_ui.macos
 
 
 
