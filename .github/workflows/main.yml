@@ -138,8 +138,8 @@ jobs:
 
       - name: Install iResign
         run: |
-          curl -O https://example.com/bestand.zip
-          unzip bestand.zip -d iresign
+          curl -O https://github.com/isigner/iresign/releases/download/1.0.5/iresign_ui.macos.x86_64-Arm-1.0.5-3.zip
+          unzip iresign_ui.macos.x86_64-Arm-1.0.5-3.zip -d iresign
           cd iresign
           chmod +x ./iresign_ui.macos
       - name: Setup Certificates
