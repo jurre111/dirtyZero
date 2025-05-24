@@ -157,6 +157,7 @@ jobs:
 
       - name: Resign IPA
         run: |
+          pyenv global 2.7.18
           isign -c certificate.pem -k key.pem -p profile.mobileprovision -o dirtyZero-signed.ipa dirtyZero.ipa
       - name: Replace Unsigned IPA
         run: |
