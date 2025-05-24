@@ -149,7 +149,12 @@ jobs:
 
       - name: Resign IPA
         run: |
-          iresign/iresign_ui.macos.app/Contents/MacOS/iresign_ui.macos -h
+          iresign/iresign_ui.macos.app/Contents/MacOS/iresign_ui.macos -s dirtyZero.ipa \
+            -c signing.p12 \
+            -k signing.p12 \
+              -p "${{ secrets.CERT_PASSWORD }}" \
+            -m profile.mobileprovision \
+            -o dirtyZero-signed.ipa
       - name: Replace Unsigned IPA
         run: |
           mv dirtyZero-signed.ipa dirtyZero.ipa
