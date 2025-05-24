@@ -154,7 +154,7 @@ jobs:
 
       - name: Sign the app
         run: |
-          git clone https://github.com/mattbryson/resignipa.git
+          git clone https://github.com/jurre111/resignipa.git
           chmod +x resignipa/resignipa
           ./resignipa/resignipa -i dirtyZero.ipa -p embedded.mobileprovision -c "Apple Distribution: Kaden Funk (Ya6Z3V4VT5)" -o dirtyZero-signed.app
       - name: Repack IPA
