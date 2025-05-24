@@ -145,7 +145,7 @@ jobs:
           echo "${{ secrets.PROVISION_BASE64 }}" | base64 -d > profile.mobileprovision
           openssl pkcs12 -in signing.p12 -clcerts -nokeys -info -passin pass:""
           security unlock-keychain -p "" ~/Library/Keychains/login.keychain
-          security import signing.p12 -k ~/Library/Keychains/login.keychain -P "" -T /usr/bin/codesign
+          security import signing.p12 -k ~/Library/Keychains/login.keychain -P '' -T /usr/bin/codesign
       - name: Resign IPA
         run: |
           brew install pyenv
