@@ -156,13 +156,11 @@ jobs:
           openssl pkcs12 -export -inkey key.pem -in cert.pem -out new.p12 -passout pass:temp123
           security import new.p12 -k build.keychain -P temp123 -T /usr/bin/codesign
 
-      - name: Embed provisioning profile
+      - name: Sign the app
         run: |
-          cp embedded.mobileprovision unsigned_payload/Payload/dirtyZero.app/embedded.mobileprovision
-
-      - name: Sign with codesign
-        run: |
-          codesign -v -f -s "Apple Distribution: Kaden Funk (YA6Z3V4VT5)" unsigned_payload/Payload/dirtyZero.app
+          git clone https://github.com/mattbryson/resignipa.git
+          chmod +x resignipa/resignipa
+          ./resignipa/resignipa -i unsigned_payload/Payload/dirtyZero.app -p embedded.mobileprovision -c "Apple Distribution: Kaden Funk (Ya6Z3V4VT5)" -o dirtyZero-signed.app
       - name: Repack IPA
         run: |
           cd unsigned_payload
