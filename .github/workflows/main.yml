@@ -137,8 +137,9 @@ jobs:
           name: dirtyZero.ipa
       - name: Set up Python 2.x
         run: |
-          brew install python@2
-          export PATH="/usr/local/opt/python@2/bin:$PATH"
+          brew install pyenv
+          pyenv install 2.7.18
+          pyenv global 2.7.18
           python --version
           pip install --upgrade pip
       - name: Install isign
