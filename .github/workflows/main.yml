@@ -162,7 +162,7 @@ jobs:
 
       - name: Sign with codesign
         run: |
-          codesign -f -s "$(security find-identity -v -p codesigning build.keychain | grep -o '".*"' | head -n 1 | tr -d '"')" --entitlements Entitlements.plist unsigned_payload/Payload/dirtyZero.app
+          codesign -f -s "$(security find-identity -v -p codesigning build.keychain | grep -o '".*"' | head -n 1 | tr -d '"')" unsigned_payload/Payload/dirtyZero.app
 
       - name: Repack IPA
         run: |
