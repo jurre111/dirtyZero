@@ -124,7 +124,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   sign_ipa:
-    name: Sign IPA with iResign
+    name: Sign IPA with codesign
     runs-on: macos-latest
     needs: [package]
     steps:
@@ -136,6 +136,10 @@ jobs:
         with:
           name: dirtyZero.ipa
 
+      - name: Unzip IPA
+        run: |
+          unzip dirtyZero.ipa -d unsigned_payload
+
       - name: Set up keychain
         run: |
           security create-keychain -p "" build.keychain
@@ -146,26 +150,31 @@ jobs:
       - name: Set up certificates
         run: |
           echo "${{ secrets.P12_BASE64 }}" | base64 -d > signing.p12
-          echo "${{ secrets.PROVISION_BASE64 }}" | base64 -d > profile.mobileprovision
+          echo "${{ secrets.PROVISION_BASE64 }}" | base64 -d > embedded.mobileprovision
           openssl pkcs12 -in signing.p12 -nocerts -out key.pem -nodes -passin pass:""
           openssl pkcs12 -in signing.p12 -clcerts -nokeys -out cert.pem -passin pass:""
           openssl pkcs12 -export -inkey key.pem -in cert.pem -out new.p12 -passout pass:temp123
-          security unlock-keychain -p "" ~/Library/Keychains/login.keychain
-          security import new.p12 -k build.keychain -P "temp123" -T /usr/bin/codesign
+          security import new.p12 -k build.keychain -P temp123 -T /usr/bin/codesign
 
-      - name: Install isign
+      - name: Embed provisioning profile
         run: |
-          brew install libimobiledevice usbmuxd python@2
-          brew install isign
+          cp embedded.mobileprovision unsigned_payload/Payload/dirtyZero.app/embedded.mobileprovision
 
-      - name: Resign IPA
+      - name: Sign with codesign
         run: |
-          isign -c cert.pem -k key.pem -p profile.mobileprovision -o dirtyZero-signed.ipa dirtyZero.ipa
+          codesign -f -s "$(security find-identity -v -p codesigning build.keychain | grep -o '".*"' | head -n 1 | tr -d '"')" --entitlements Entitlements.plist unsigned_payload/Payload/dirtyZero.app
 
-      - name: Move signed IPA to downloads
+      - name: Repack IPA
+        run: |
+          cd unsigned_payload
+          zip -r ../dirtyZero-signed.ipa Payload
+          cd ..
+
+      - name: Move signed IPA to Downloads
         run: |
           mkdir -p ~/Downloads
           mv dirtyZero-signed.ipa ~/Downloads/dirtyZero-signed.ipa
+
 
 
 
