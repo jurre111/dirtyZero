@@ -136,10 +136,6 @@ jobs:
         with:
           name: dirtyZero.ipa
 
-      - name: Unzip IPA
-        run: |
-          unzip dirtyZero.ipa -d unsigned_payload
-
       - name: Set up keychain
         run: |
           security create-keychain -p "" build.keychain
@@ -160,7 +156,7 @@ jobs:
         run: |
           git clone https://github.com/mattbryson/resignipa.git
           chmod +x resignipa/resignipa
-          ./resignipa/resignipa -i unsigned_payload/Payload/dirtyZero.app -p embedded.mobileprovision -c "Apple Distribution: Kaden Funk (Ya6Z3V4VT5)" -o dirtyZero-signed.app
+          ./resignipa/resignipa -i dirtyZero.ipa -p embedded.mobileprovision -c "Apple Distribution: Kaden Funk (Ya6Z3V4VT5)" -o dirtyZero-signed.app
       - name: Repack IPA
         run: |
           cd unsigned_payload
