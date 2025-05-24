@@ -161,19 +161,12 @@ jobs:
           BUNDLE_IDENTIFIER=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" unsigned_payload/Payload/dirtyZero.app/Info.plist)
           echo "Bundle Identifier: ${BUNDLE_IDENTIFIER}"
 
-          # Extract Team Identifier from the provisioning profile (you've already decrypted it)
-          PROVISIONING_PROFILE_PATH="path/to/embedded.mobileprovision"
-          PROVISIONING_PROFILE_PLIST="provisioning_profile.plist"
-          security cms -D -i "${PROVISIONING_PROFILE_PATH}" > "${PROVISIONING_PROFILE_PLIST}"
-          TEAM_IDENTIFIER=$(/usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" "${PROVISIONING_PROFILE_PLIST}")
-          echo "Team Identifier: ${TEAM_IDENTIFIER}"
-
           # Create Entitlements.plist
           touch Entitlements.plist
-          /usr/libexec/PlistBuddy -c "Add :application-identifier string ${TEAM_IDENTIFIER}.${BUNDLE_IDENTIFIER}" Entitlements.plist
+          /usr/libexec/PlistBuddy -c "Add :application-identifier string YA6Z3V4VT5.${BUNDLE_IDENTIFIER}" Entitlements.plist
           /usr/libexec/PlistBuddy -c "Add :get-task-allow bool true" Entitlements.plist
           /usr/libexec/PlistBuddy -c "Add :keychain-access-groups array" Entitlements.plist
-          /usr/libexec/PlistBuddy -c "Add :keychain-access-groups:0 string ${TEAM_IDENTIFIER}.${BUNDLE_IDENTIFIER}" Entitlements.plist
+          /usr/libexec/PlistBuddy -c "Add :keychain-access-groups:0 string YA6Z3V4VT5.${BUNDLE_IDENTIFIER}" Entitlements.plist
 
           # Display the Entitlements.plist for verification
           cat Entitlements.plist
