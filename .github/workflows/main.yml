@@ -135,42 +135,38 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: dirtyZero.ipa
-      - name: Install isign
+
+      - name: Set up keychain
         run: |
-          pip install isign
+          security create-keychain -p "" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "" build.keychain
+          security set-keychain-settings
+
       - name: Set up certificates
         run: |
-          # Decode the .p12 and provisioning profile from GitHub secrets
           echo "${{ secrets.P12_BASE64 }}" | base64 -d > signing.p12
           echo "${{ secrets.PROVISION_BASE64 }}" | base64 -d > profile.mobileprovision
-          # Extract private key
           openssl pkcs12 -in signing.p12 -nocerts -out key.pem -nodes -passin pass:""
-
-          # Extract certificate
           openssl pkcs12 -in signing.p12 -clcerts -nokeys -out cert.pem -passin pass:""
           openssl pkcs12 -export -inkey key.pem -in cert.pem -out new.p12 -passout pass:temp123
-          echo "Password set to 'temp123' for new.p12"
-          # Import the certificate into the keychain
           security unlock-keychain -p "" ~/Library/Keychains/login.keychain
-          security import new.p12 -k ~/Library/Keychains/login.keychain -P "temp123" -T /usr/bin/codesign
+          security import new.p12 -k build.keychain -P "temp123" -T /usr/bin/codesign
+
+      - name: Install isign
+        run: |
+          brew install libimobiledevice usbmuxd python@2
+          brew install isign
+
       - name: Resign IPA
         run: |
-          brew install pyenv
-          pyenv install 2.7.18
-          pyenv global 2.7.18
-          PATH=$(pyenv root)/shims:$PATH
-          python --version
-          pip install --upgrade pip
-          isign -c certificate.pem -k key.pem -p profile.mobileprovision -o dirtyZero-signed.ipa dirtyZero.ipa
-      - name: Replace Unsigned IPA
-        run: |
-          mv dirtyZero-signed.ipa dirtyZero.ipa
+          isign -c cert.pem -k key.pem -p profile.mobileprovision -o dirtyZero-signed.ipa dirtyZero.ipa
 
-      - name: Upload Signed IPA
-        uses: actions/upload-artifact@v4
-        with:
-          name: dirtyZero.ipa
-          path: dirtyZero.ipa
+      - name: Move signed IPA to downloads
+        run: |
+          mkdir -p ~/Downloads
+          mv dirtyZero-signed.ipa ~/Downloads/dirtyZero-signed.ipa
+
 
 
 
