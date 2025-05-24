@@ -144,10 +144,10 @@ jobs:
           echo "${{ secrets.P12_BASE64 }}" | base64 -d > signing.p12
           echo "${{ secrets.PROVISION_BASE64 }}" | base64 -d > profile.mobileprovision
           # Extract private key
-          openssl pkcs12 -in old.p12 -nocerts -out key.pem -nodes -passin pass:""
+          openssl pkcs12 -in signing.p12 -nocerts -out key.pem -nodes -passin pass:""
 
           # Extract certificate
-          openssl pkcs12 -in old.p12 -clcerts -nokeys -out cert.pem -passin pass:""
+          openssl pkcs12 -in signing.p12 -clcerts -nokeys -out cert.pem -passin pass:""
           openssl pkcs12 -export -inkey key.pem -in cert.pem -out new.p12 -passout pass:temp123
           echo "Password set to 'temp123' for new.p12"
           # Import the certificate into the keychain
