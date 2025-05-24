@@ -143,9 +143,16 @@ jobs:
           # Decode the .p12 and provisioning profile from GitHub secrets
           echo "${{ secrets.P12_BASE64 }}" | base64 -d > signing.p12
           echo "${{ secrets.PROVISION_BASE64 }}" | base64 -d > profile.mobileprovision
-          openssl pkcs12 -in signing.p12 -clcerts -nokeys -info -passin pass:""
+          # Extract private key
+          openssl pkcs12 -in old.p12 -nocerts -out key.pem -nodes -passin pass:""
+
+          # Extract certificate
+          openssl pkcs12 -in old.p12 -clcerts -nokeys -out cert.pem -passin pass:""
+          openssl pkcs12 -export -inkey key.pem -in cert.pem -out new.p12 -passout pass:temp123
+          echo "Password set to 'temp123' for new.p12"
+          # Import the certificate into the keychain
           security unlock-keychain -p "" ~/Library/Keychains/login.keychain
-          security import signing.p12 -k ~/Library/Keychains/login.keychain -P '' -T /usr/bin/codesign
+          security import new.p12 -k ~/Library/Keychains/login.keychain -P "temp123" -T /usr/bin/codesign
       - name: Resign IPA
         run: |
           brew install pyenv
