@@ -142,23 +142,14 @@ jobs:
           unzip iresign_ui.macos.x86_64-Arm-1.0.5-3.zip -d iresign
           cd iresign
           chmod +x ./iresign_ui.macos.app/Contents/MacOS/iresign_ui.macos
-      - name: Setup Certificates
+      - name: Decode certificate and provisioning profile
         run: |
           echo "${{ secrets.P12_BASE64 }}" | base64 -d > signing.p12
           echo "${{ secrets.PROVISION_BASE64 }}" | base64 -d > profile.mobileprovision
-          security create-keychain -p password build.keychain
-          security default-keychain -s build.keychain
-          security unlock-keychain -p password build.keychain
-          security import signing.p12 -k build.keychain -P "${{ secrets.CERT_PASSWORD }}" -T /usr/bin/codesign
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
 
       - name: Resign IPA
         run: |
-          ./iresign_ui.macos
-
-
-
+          iresign_ui.macos.app/Contents/MacOS/iresign_ui.macos -h
       - name: Replace Unsigned IPA
         run: |
           mv dirtyZero-signed.ipa dirtyZero.ipa
