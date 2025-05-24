@@ -143,7 +143,7 @@ jobs:
           # Decode the .p12 and provisioning profile from GitHub secrets
           echo "${{ secrets.P12_BASE64 }}" | base64 -d > signing.p12
           echo "${{ secrets.PROVISION_BASE64 }}" | base64 -d > profile.mobileprovision
-          openssl pkcs12 -in signing.p12 -clcerts -nokeys -info
+          openssl pkcs12 -in signing.p12 -clcerts -nokeys -info -passin pass:""
           security unlock-keychain -p "" ~/Library/Keychains/login.keychain
           security import signing.p12 -k ~/Library/Keychains/login.keychain -P "" -T /usr/bin/codesign
       - name: Resign IPA
