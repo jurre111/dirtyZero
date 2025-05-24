@@ -156,6 +156,7 @@ jobs:
         run: |
           git clone https://github.com/bq/ipa-resigner.git
           chmod +x ipa-resigner/resign.sh
+          security find-identity -v -p codesigning
           sh ./ipa-resigner/resign.sh dirtyZero.ipa embedded.mobileprovision "Apple Distribution: Kaden Funk (YA6Z3V4VT5)"
       - name: Repack IPA
         run: |
