@@ -155,6 +155,17 @@ jobs:
       - name: Sign the app
         run: |
           unzip -q dirtyZero.ipa -d unsigned_payload
+          BUNDLE_IDENTIFIER=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" unsigned_payload/Payload/dirtyZero.app/Info.plist)
+          echo "Bundle Identifier: ${BUNDLE_IDENTIFIER}"
+          TEAM_IDENTIFIER=$(/usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" nsigned_payload/Payload/dirtyZero.app/Info.plist)
+          echo "Team Identifier: ${TEAM_IDENTIFIER}"
+          touch Entitlements.plist
+          /usr/libexec/PlistBuddy -c "Add :application-identifier string ${TEAM_IDENTIFIER}.${BUNDLE_IDENTIFIER}" Entitlements.plist
+          /usr/libexec/PlistBuddy -c "Add :get-task-allow bool true" Entitlements.plist
+          /usr/libexec/PlistBuddy -c "Add :keychain-access-groups array" Entitlements.plist
+          /usr/libexec/PlistBuddy -c "Add :keychain-access-groups:0 string ${TEAM_IDENTIFIER}.${BUNDLE_IDENTIFIER}" Entitlements.plist
+          cat Entitlements.plist
+          
           codesign --force --sign "Apple Distribution: Kaden Funk (YA6Z3V4VT5)" --verbose --deep "unsigned_payload/Payload/dirtyZero.app"
       - name: Repack IPA
         run: |
