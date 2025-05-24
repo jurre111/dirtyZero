@@ -162,7 +162,7 @@ jobs:
 
       - name: Sign with codesign
         run: |
-          codesign -f -s "Apple Distribution: Kaden Funk (YA6Z3V4VT5)" unsigned_payload/Payload/dirtyZero.app
+          codesign -v -f -s "Apple Distribution: Kaden Funk (YA6Z3V4VT5)" unsigned_payload/Payload/dirtyZero.app
       - name: Repack IPA
         run: |
           cd unsigned_payload
