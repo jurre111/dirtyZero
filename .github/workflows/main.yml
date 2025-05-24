@@ -141,7 +141,7 @@ jobs:
           curl -L -O https://github.com/isigner/iresign/releases/download/1.0.5/iresign_ui.macos.x86_64-Arm-1.0.5-3.zip
           unzip iresign_ui.macos.x86_64-Arm-1.0.5-3.zip -d iresign
           cd iresign
-          chmod +x ./iresign_ui.macos
+          chmod +x ./iresign_ui.macos.app/Contents/MacOS/iresign_ui.macos
       - name: Setup Certificates
         run: |
           echo "${{ secrets.P12_BASE64 }}" | base64 -d > signing.p12
