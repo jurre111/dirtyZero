@@ -140,7 +140,7 @@ jobs:
         - name: Decode certificate and provisioning profile
           run: |
             echo "$CERT_P12_BASE64" | base64 -d > cert.p12
-            echo "$MOBILEPROVISION_BASE64" | base64 -d > profile.mobileprovision
+            echo "$MOBILEPROVISION_BASE64" | base64 -d > profile.prov
           env:
             CERT_P12_BASE64: ${{ secrets.P12_BASE64 }}
             MOBILEPROVISION_B64: ${{ secrets.PROVISION_BASE64 }}
@@ -156,7 +156,7 @@ jobs:
             ls
             unzip dirtyZero.ipa
             ./zsign/bin/zsign -k cert.p12 -p "" \
-              -m profile.mobileprovision \
+              -m profile.prov \
               -o signed/dirtZero-signed.ipa \
               Payload/dirtyZero.app
 
