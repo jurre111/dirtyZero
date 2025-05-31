@@ -172,7 +172,8 @@ jobs:
             cp Payload/${{env.scheme}}.app/Info.plist Info.plist
             ls
             echo "Copy succeeded!"
-            plistutil -i "Info.plist" -o "Info.plist" -f xml
+            plistutil -i Info.plist -o Info.plist -f xml
+            echo "Conversion succeeded"
             bundle_id=$(xmllint --xpath "string(//key[.='CFBundleIdentifier']/following-sibling::string[1])" "$info_plist")
             version=$(xmllint --xpath "string(//key[.='CFBundleShortVersionString']/following-sibling::string[1])" "$info_plist")
             app_title=$(xmllint --xpath "string(//key[.='CFBundleName']/following-sibling::string[1])" "$info_plist")
