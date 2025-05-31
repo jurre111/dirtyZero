@@ -10,15 +10,15 @@
             <key>kind</key>
             <string>software-package</string>
             <key>url</key>
-            <string>https://github.com/jurre111/dirtyZero/raw/refs/heads/main/downloads/dirtyZero-signed.ipa</string> <!-- Replace with the URL to your .ipa file -->
+            <string>https://yourdomain.com/path/to/.ipa</string> <!-- Replace with actual URL to your IPA -->
           </dict>
         </array>
         <key>metadata</key>
         <dict>
           <key>bundle-identifier</key>
-          <string>com.jbdotparty.dirtyZero</string> <!-- Replace with your app's bundle identifier -->
+          <string>com.jbdotparty.dirtyZero</string>
           <key>bundle-version</key>
-          <string>4</string> <!-- Replace with the new version -->
+          <string>0.4</string>
           <key>kind</key>
           <string>software</string>
           <key>title</key>
