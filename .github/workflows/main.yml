@@ -154,6 +154,7 @@ jobs:
             mkdir signed
             cd ../../..
             ls
+            cat profile.prov
             unzip dirtyZero.ipa
             ./zsign/bin/zsign -k cert.p12 -p "" -m profile.prov -o signed/dirtZero-signed.ipa Payload/dirtyZero.app
 
