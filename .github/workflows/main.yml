@@ -124,7 +124,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   sign-ipa_1:
-      name: Sign IPA with codesign
+      name: Sign IPA with ZSign
       runs-on: ubuntu-latest
       needs: [package]
       steps:
@@ -153,9 +153,9 @@ jobs:
         - name: Sign IPA using ZSign
           run: |
             mkdir signed
-            ./zsign/build/zsign -k cert.p12 -p "" \
+            zsign -k cert.p12 -p "" \
               -m profile.mobileprovision \
-              -o signed/MyApp-signed.ipa \
+              -o signed/dirtZero-signed.ipa \
               dirtyZero.ipa
 
         - name: Upload signed IPA
