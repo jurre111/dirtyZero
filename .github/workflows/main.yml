@@ -167,6 +167,7 @@ jobs:
             mv "${{env.scheme}}-signed.ipa" "$GITHUB_WORKSPACE/downloads/"
         - name: Create manifest.plist and add to repo
           run: |
+            sudo apt-get install libxml2-utils
             info_plist="Payload/dirtyZero.app/Info.plist"
             bundle_id=$(xmllint --xpath "string(//key[.='CFBundleIdentifier']/following-sibling::string[1])" "$info_plist")
             version=$(xmllint --xpath "string(//key[.='CFBundleShortVersionString']/following-sibling::string[1])" "$info_plist")
