@@ -175,9 +175,9 @@ jobs:
             plistutil -i Info.plist -o Info.plist -f xml
             echo "Conversion succeeded"
             cat Info.plist
-            bundle_id=$(xmllint --xpath "string(//key[.='CFBundleIdentifier']/following-sibling::string[1])" "$info_plist")
-            version=$(xmllint --xpath "string(//key[.='CFBundleShortVersionString']/following-sibling::string[1])" "$info_plist")
-            app_title=$(xmllint --xpath "string(//key[.='CFBundleName']/following-sibling::string[1])" "$info_plist")
+            bundle_id=$(xmllint --xpath "string(//key[.='CFBundleIdentifier']/following-sibling::string[1])" "Info_plist")
+            version=$(xmllint --xpath "string(//key[.='CFBundleShortVersionString']/following-sibling::string[1])" "Info_plist")
+            app_title=$(xmllint --xpath "string(//key[.='CFBundleName']/following-sibling::string[1])" "Info_plist")
             cat > "manifest.plist" <<EOF
             <?xml version="1.0" encoding="UTF-8"?>
             <plist version="1.0">
