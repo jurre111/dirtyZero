@@ -123,6 +123,48 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+sign-ipa_1:
+    name: Sign IPA with codesign
+    runs-on: ubuntu-latest
+    needs: [package]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Download Unsigned IPA
+        uses: actions/download-artifact@v4
+        with:
+          name: dirtyZero.ipa
+      - name: Install ZSign dependencies
+        run: |
+          sudo apt-get install -y git g++ pkg-config libssl-dev libminizip-dev
+      - name: Clone and build ZSign
+        run: |
+          git clone https://github.com/zhlynn/zsign.git
+          cd zsign/build/linux
+          make clean && make
+      - name: Decode certificate and provisioning profile
+        run: |
+          echo "$P12_BASE64" | base64 -d > cert.p12
+          echo "$ROVISION_BASE64" | base64 -d > profile.mobileprovision
+        env:
+          CERT_P12_BASE64: ${{ secrets.P12_BASE64 }}
+          MOBILEPROVISION_B64: ${{ secrets.ROVISION_BASE64 }}
+
+      - name: Sign IPA using ZSign
+        run: |
+          mkdir signed
+          ./zsign/build/zsign -k cert.p12 -p "" \
+            -m profile.mobileprovision \
+            -o signed/MyApp-signed.ipa \
+            dirtyZero.ipa
+
+      - name: Upload signed IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: signed-ipa
+          path: signed/MyApp-signed.ipa
+        
+
   sign_ipa:
     name: Sign IPA with codesign
     runs-on: macos-latest
