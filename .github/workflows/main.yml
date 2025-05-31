@@ -143,7 +143,6 @@ jobs:
             cd zsign/build/linux
             make clean && make
             sudo apt-get install -y ideviceinstaller
-            cd ../..
             ls
         - name: Decode certificate and provisioning profile
           run: |
