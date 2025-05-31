@@ -169,6 +169,7 @@ jobs:
           run: |
             sudo apt-get install libxml2-utils
             sudo apt-get install libplist-utils
+            ls
             plistutil -i "Payload/${{env.scheme}}.app/Info.plist" -o "Info.plist" -f xml
             bundle_id=$(xmllint --xpath "string(//key[.='CFBundleIdentifier']/following-sibling::string[1])" "$info_plist")
             version=$(xmllint --xpath "string(//key[.='CFBundleShortVersionString']/following-sibling::string[1])" "$info_plist")
