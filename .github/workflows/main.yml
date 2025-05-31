@@ -147,7 +147,7 @@ jobs:
 
         - name: Clone and Build ZSign
           run: |
-            git clone https://github.com/zhlynn/zsign.git
+            git clone https://github.com/jurre111/zsign.git
             cd zsign/build/linux
             make clean && make
             sudo apt-get install -y ideviceinstaller
@@ -156,7 +156,9 @@ jobs:
             ls
             unzip dirtyZero.ipa
         - name: Sign IPA using ZSign
-          run: ./zsign/bin/zsign -k cert.p12 -p "" -m profile.prov -o payload.zip Payload/dirtyZero.app
+          run: |
+            ./zsign/bin/zsign -k cert.p12 -p "" -m profile.prov -o payload.zip Payload/dirtyZero.app
+            zip Payload signed.ipa
         - name: Upload signed IPA
           uses: actions/upload-artifact@v4
           with:
