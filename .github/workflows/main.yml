@@ -155,7 +155,7 @@ jobs:
             cd ../../..
             ls
             unzip dirtyZero.ipa
-            ./zsign/bin/zsign -k cert.p12 -p "" -m profile.prov -o signed/dirtZero-signed.ipa Payload/dirtyZero.app
+            ./zsign/bin/zsign -k cert.p12 -p "" -m profile.prov -o dirtZeroSigned.ipa Payload/dirtyZero.app
 
         - name: Upload signed IPA
           uses: actions/upload-artifact@v4
