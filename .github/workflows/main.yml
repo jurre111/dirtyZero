@@ -167,7 +167,7 @@ jobs:
             mv "${{env.scheme}}-signed.ipa" "$GITHUB_WORKSPACE/downloads/"
         - name: Create manifest.plist and add to repo
           run: |
-            info_plist = "Payload/${{env.scheme}}.app/Info.plist"
+            info_plist="Payload/${{env.scheme}}.app/Info.plist"
             bundle_id=$( /usr/libexec/PlistBuddy -c "Print CFBundleIdentifier" "$info_plist" )
             version=$( /usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$info_plist" )
             app_title=$( /usr/libexec/PlistBuddy -c "Print CFBundleName" "$info_plist" )
