@@ -156,7 +156,7 @@ jobs:
         - name: Sign IPA using ZSign
           run: |
             mkdir signed
-            zsign -k cert.p12 -p "" \
+            ./zsign -k cert.p12 -p "" \
               -m profile.mobileprovision \
               -o signed/dirtZero-signed.ipa \
               dirtyZero.ipa
