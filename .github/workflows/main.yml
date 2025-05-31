@@ -145,7 +145,7 @@ jobs:
             CERT_P12_BASE64: ${{ secrets.P12_BASE64 }}
             MOBILEPROVISION_B64: ${{ secrets.PROVISION_BASE64 }}
 
-        - name: Clone and Build ZSign + Sign IPA using ZSign
+        - name: Clone and Build ZSign
           run: |
             git clone https://github.com/zhlynn/zsign.git
             cd zsign/build/linux
@@ -155,8 +155,8 @@ jobs:
             cd ../../..
             ls
             unzip dirtyZero.ipa
-            ./zsign/bin/zsign -k cert.p12 -p "" -m profile.prov -o dirtZeroSigned.ipa Payload/dirtyZero.app
-
+        - name: Sign IPA using ZSign
+          run: ./zsign/bin/zsign -k cert.p12 -p "" -m profile.prov -o dirtZeroSigned.ipa Payload/dirtyZero.app
         - name: Upload signed IPA
           uses: actions/upload-artifact@v4
           with:
