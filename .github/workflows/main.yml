@@ -152,7 +152,7 @@ jobs:
             make clean && make
             sudo apt-get install -y ideviceinstaller
             mkdir signed
-            cd ../..
+            cd ../../..
             ls
             ./zsign/bin/zsign -k cert.p12 -p "" \
               -m profile.mobileprovision \
