@@ -74,6 +74,7 @@ jobs:
       scheme: ${{ needs.build.outputs.scheme }}
       archive_path: ${{ needs.build.outputs.archive_path }}
     outputs:
+      scheme: ${{ steps.scheme.outputs.scheme }}
       artifact: ${{ env.scheme }}.ipa
 
     steps:
@@ -126,9 +127,9 @@ jobs:
   sign-ipa_1:
       name: Sign IPA with ZSign
       runs-on: ubuntu-latest
-      env:
-        scheme: ${{ needs.build.outputs.scheme }}
       needs: [package]
+      env:
+        scheme: ${{ needs.package.outputs.scheme }}
       steps:
         - name: Checkout code
           uses: actions/checkout@v4
