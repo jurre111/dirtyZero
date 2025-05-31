@@ -158,12 +158,20 @@ jobs:
         - name: Sign IPA using ZSign
           run: |
             ./zsign/bin/zsign -k cert.p12 -p "" -m profile.prov -o payload.zip Payload/dirtyZero.app
-            zip Payload signed.ipa
-        - name: Upload signed IPA
-          uses: actions/upload-artifact@v4
-          with:
-            name: signed-ipa
-            path: signed/MyApp-signed.ipa
+            zip -r dirtyZero-signed.ipa Payload
+        - name: Move IPA to root of repository
+          run: |
+            mv "dirtyZero-signed.ipa" "$GITHUB_WORKSPACE/downloads/"
+        - name: Commit and push IPA to repository
+          run: |
+            git config --global user.name "github-actions"
+            git config --global user.email "github-actions@github.com"
+            git add "$GITHUB_WORKSPACE/downloads/dirtyZero-signed.ipa"
+            git commit -m "Add signed IPA build artifact"
+            git push
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   sign_ipa:
     name: Sign IPA with codesign
     runs-on: macos-latest
