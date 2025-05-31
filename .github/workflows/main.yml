@@ -139,11 +139,11 @@ jobs:
             sudo apt-get install -y git g++ pkg-config libssl-dev libminizip-dev
         - name: Decode certificate and provisioning profile
           run: |
-            echo "$P12_BASE64" | base64 -d > cert.p12
-            echo "$ROVISION_BASE64" | base64 -d > profile.mobileprovision
+            echo "$CERT_P12_BASE64" | base64 -d > cert.p12
+            echo "$MOBILEPROVISION_BASE64" | base64 -d > profile.mobileprovision
           env:
             CERT_P12_BASE64: ${{ secrets.P12_BASE64 }}
-            MOBILEPROVISION_B64: ${{ secrets.ROVISION_BASE64 }}
+            MOBILEPROVISION_B64: ${{ secrets.PROVISION_BASE64 }}
 
         - name: Clone and Build ZSign + Sign IPA using ZSign
           run: |
