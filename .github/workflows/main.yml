@@ -152,10 +152,9 @@ jobs:
             make clean && make
             sudo apt-get install -y ideviceinstaller
             mkdir signed
-            cd ../../bin
-            ls
             cd ../..
-            /zsign/bin/zsign -k cert.p12 -p "" \
+            ls
+            ./zsign/bin/zsign -k cert.p12 -p "" \
               -m profile.mobileprovision \
               -o signed/dirtZero-signed.ipa \
               dirtyZero.ipa
