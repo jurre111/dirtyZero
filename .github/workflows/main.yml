@@ -168,7 +168,9 @@ jobs:
         - name: Create manifest.plist and add to repo
           run: |
             sudo apt-get install libxml2-utils
-            info_plist="Payload/dirtyZero.app/Info.plist"
+            sudo apt-get install libplist-utils
+            cp Payload/${{env.scheme}}.app/Info.plist
+            plistutil -i "Info.plist" -o "Info.plist" -f xml
             bundle_id=$(xmllint --xpath "string(//key[.='CFBundleIdentifier']/following-sibling::string[1])" "$info_plist")
             version=$(xmllint --xpath "string(//key[.='CFBundleShortVersionString']/following-sibling::string[1])" "$info_plist")
             app_title=$(xmllint --xpath "string(//key[.='CFBundleName']/following-sibling::string[1])" "$info_plist")
